@@ -1,56 +1,23 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-CAMINHO_BANCO = "sqlite:///despesatotal.db"
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME")
+
+BANCODEDADOS_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+engine = create_engine(BANCODEDADOS_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
 
 def get_engine():
-    return create_engine(CAMINHO_BANCO)
-
-def criar_tabelas():
-    """Cria as tabelas necessárias no banco de dados"""
-    queries = [
-        text("""
-            CREATE TABLE IF NOT EXISTS relatorio_cadop (
-                Registro_ANS TEXT,
-                CNPJ TEXT,
-                Razao_Social TEXT,
-                Nome_Fantasia TEXT,
-                Modalidade TEXT,
-                Logradouro TEXT,
-                Numero TEXT,
-                Complemento TEXT,
-                Bairro TEXT,
-                Cidade TEXT,
-                UF TEXT,
-                CEP TEXT,
-                DDD TEXT,
-                Telefone TEXT,
-                Fax TEXT,
-                Endereco_eletronico TEXT,
-                Representante TEXT,
-                Cargo_Representante TEXT,
-                Regiao_de_Comercializacao TEXT,
-                Data_Registro_ANS TEXT
-            )
-        """),
-        text("""
-            CREATE TABLE IF NOT EXISTS despesas_trimestrais (
-                DATA TEXT,
-                REG_ANS INTEGER,
-                CD_CONTA_CONTABIL INTEGER,
-                DESCRICAO TEXT,
-                VL_SALDO_INICIAL TEXT,
-                VL_SALDO_FINAL TEXT,
-                trimestre TEXT
-            )
-        """)
-    ]
-    
-    engine = get_engine()
-    with engine.begin() as conn:
-        for query in queries:
-            conn.execute(query)
-
-    print("✅ Tabelas `relatorio_cadop` e `despesas_trimestrais` criadas/verificadas.")
-
-if __name__ == "__main__":
-    criar_tabelas()
+    return create_engine(BANCODEDADOS_URL)

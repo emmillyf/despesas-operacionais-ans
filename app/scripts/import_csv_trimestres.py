@@ -1,13 +1,13 @@
 import pandas as pd
 from pathlib import Path
-from database import get_engine, criar_tabelas
+from sqlalchemy import inspect
+from database import get_engine
 
-DIRETORIO_CSV = Path(r"C:\Users\emmyf\Documents\teste3\despesasop\app\trimestres")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DIRETORIO_CSV = BASE_DIR / "trimestres"
 NOME_TABELA = "despesas_trimestrais"
 
 def importar_csvs_trimestrais():
-    criar_tabelas()
-
     engine = get_engine()
 
     if not DIRETORIO_CSV.exists():
@@ -32,6 +32,8 @@ def importar_csvs_trimestrais():
                 df = pd.read_csv(arquivo, delimiter=';', encoding='utf-8-sig')
             except UnicodeDecodeError:
                 df = pd.read_csv(arquivo, delimiter=';', encoding='latin1')
+                
+            df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
 
             if df.empty:
                 print(f"⚠️ O arquivo {arquivo.name} está vazio.")
@@ -46,6 +48,15 @@ def importar_csvs_trimestrais():
 
         except Exception as e:
             print(f"❌ Erro ao processar {arquivo.name}: {e}")
+
+def listar_tabelas():
+    engine = get_engine()
+    inspetor = inspect(engine)
+    tabelas = inspetor.get_table_names()
+
+    print("\n📋 Tabelas encontradas no banco de dados:")
+    for tabela in tabelas:
+        print("-", tabela)
 
 if __name__ == "__main__":
     importar_csvs_trimestrais()

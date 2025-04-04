@@ -1,21 +1,27 @@
 import pandas as pd
-from database import get_engine, criar_tabelas
+from pathlib import Path
+from database import get_engine
+from sqlalchemy import inspect
 
-# Caminho relativo "C:\Users\{seuUser}\..."
-CAMINHO_CSV = r"C:\Users\emmyf\Documents\teste3\despesasop\app\Relatorio_cadop.csv"
+BASE_DIR = Path(__file__).resolve().parent.parent  
+CAMINHO_CSV = BASE_DIR / "Relatorio_cadop.csv"
 NOME_TABELA = "relatorio_cadop"
 
 def importar_relatorio_cadop():
-    criar_tabelas()
-    
+    engine = get_engine()
+
     try:
-        df = pd.read_csv(CAMINHO_CSV, delimiter=';', encoding='utf-8-sig')
+        try:
+            df = pd.read_csv(CAMINHO_CSV, delimiter=';', encoding='utf-8-sig')
+        except UnicodeDecodeError:
+            df = pd.read_csv(CAMINHO_CSV, delimiter=';', encoding='latin1')
+                
+        df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
 
         if df.empty:
             print("❌ O arquivo Relatorio_cadop.csv está vazio.")
             return
 
-        engine = get_engine()
         with engine.begin() as conn:
             df.to_sql(NOME_TABELA, conn, if_exists='replace', index=False)
 
@@ -24,5 +30,15 @@ def importar_relatorio_cadop():
     except Exception as e:
         print(f"❌ Erro ao importar o Relatorio_cadop: {e}")
 
+def listar_tabelas():
+    engine = get_engine()
+    inspetor = inspect(engine)
+    tabelas = inspetor.get_table_names()
+    
+    print("📋 Tabelas encontradas no banco de dados:")
+    for tabela in tabelas:
+        print("-", tabela)
+
 if __name__ == "__main__":
     importar_relatorio_cadop()
+    listar_tabelas()
